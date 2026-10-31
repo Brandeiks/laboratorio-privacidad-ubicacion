@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self' https://ipapi.co https://ipwho.is; base-uri 'self'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Laboratorio académico: qué ubicación puede revelar una visita web, con consentimiento explícito.">
+  <title>Lab · Privacidad y ubicación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <p class="tag">LAB-01 // privacidad</p>
+      <h1>Qué ubicación puede revelar una visita web</h1>
+      <p class="sub">Compara lo que un sitio estima por tu IP con lo que obtiene cuando <em>tú</em> aceptas compartir la ubicación del navegador.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="alerta-contexto" class="alerta" hidden>
+      Esta página no está en un contexto seguro (HTTPS o <code>localhost</code>). El navegador bloqueará la geolocalización.
+    </div>
+
+    <!-- 01 · Aviso y consentimiento -->
+    <section class="panel" id="paso-aviso">
+      <h2><span class="num">01</span> Antes de empezar</h2>
+      <ul class="lista">
+        <li><strong>Qué se pide:</strong> una estimación de ubicación por tu IP y, si lo autorizas, la ubicación de tu navegador (latitud, longitud y margen de precisión).</li>
+        <li><strong>Para qué:</strong> comparar ambos métodos y medir su diferencia. Nada más.</li>
+        <li><strong>Dónde se guarda:</strong> solo en este navegador, y solo si pulsas «Guardar». No hay servidor que reciba tus coordenadas.</li>
+        <li><strong>Cómo se borra:</strong> con el botón «Borrar todo» del paso 05.</li>
+        <li><strong>Puedes rechazar:</strong> en cualquier momento. Rechazar el permiso también es un resultado válido.</li>
+      </ul>
+      <label class="check">
+        <input type="checkbox" id="acepto">
+        <span>He leído el aviso y acepto participar en la demostración.</span>
+      </label>
+    </section>
+
+    <!-- 02 · Estimación por IP -->
+    <section class="panel" id="paso-ip">
+      <h2><span class="num">02</span> Estimación por IP</h2>
+      <p>Cualquier servidor que visitas ve tu IP pública. Con bases de datos GeoIP se puede estimar país, región o ciudad, <strong>sin pedirte permiso</strong>.</p>
+      <p class="nota">Al pulsar, tu navegador consulta un servicio externo (ipapi.co, o ipwho.is si falla). Ese servicio recibe tu IP.</p>
+      <button type="button" id="btn-ip" class="btn" disabled>Estimar mi ubicación por IP</button>
+      <p class="estado" id="estado-ip" role="status"></p>
+      <dl class="datos" id="res-ip" hidden></dl>
+    </section>
+
+    <!-- 03 · Geolocalización del navegador -->
+    <section class="panel" id="paso-geo">
+      <h2><span class="num">03</span> Ubicación del navegador</h2>
+      <p>Usa la API <code>navigator.geolocation</code>. El navegador te mostrará su propio aviso: si no aceptas, la página no recibe coordenadas.</p>
+      <p class="permiso">Estado del permiso: <code id="permiso">—</code></p>
+      <button type="button" id="btn-geo" class="btn btn-principal" disabled>Compartir mi ubicación para la demostración</button>
+      <p class="estado" id="estado-geo" role="status"></p>
+      <dl class="datos" id="res-geo" hidden></dl>
+      <p class="nota" id="nota-osm" hidden>
+        <a id="link-osm" href="#" target="_blank" rel="noopener noreferrer">Ver en OpenStreetMap ↗</a>
+        — abrir el enlace envía estas coordenadas a OpenStreetMap.
+      </p>
+    </section>
+
+    <!-- 04 · Comparación -->
+    <section class="panel" id="paso-comparacion">
+      <h2><span class="num">04</span> Comparación</h2>
+      <div id="comparacion" class="comparacion">
+        <p class="vacio">Completa los pasos 02 y 03 para ver la diferencia entre ambos métodos.</p>
+      </div>
+    </section>
+
+    <!-- 05 · Guardar y borrar -->
+    <section class="panel" id="paso-guardar">
+      <h2><span class="num">05</span> Guardar y borrar</h2>
+      <p>Guarda el intento en <strong>este navegador</strong> para comparar dispositivos y redes. No se guarda tu IP, tu proveedor ni tu user agent.</p>
+      <div class="form">
+        <label>Dispositivo
+          <select id="dispositivo">
+            <option>PC de escritorio</option>
+            <option>Laptop</option>
+            <option>Móvil</option>
+            <option>Tablet</option>
+            <option>Otro</option>
+          </select>
+        </label>
+        <label>Red
+          <select id="red">
+            <option>Wi-Fi</option>
+            <option>Datos móviles</option>
+            <option>Cable</option>
+            <option>VPN</option>
+            <option>Otra</option>
+          </select>
+        </label>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="redondear" checked>
+        <span>Redondear coordenadas a 3 decimales (≈ 110 m) antes de guardar.</span>
+      </label>
+      <div class="acciones">
+        <button type="button" id="btn-guardar" class="btn">Guardar este intento</button>
+      </div>
+      <p class="estado" id="estado-guardar" role="status"></p>
+
+      <div class="tabla-wrap">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Dispositivo</th><th>Red</th><th>Permiso</th>
+              <th>Precisión</th><th>Ciudad (IP)</th><th>Distancia</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla-cuerpo"></tbody>
+        </table>
+        <p class="vacio" id="tabla-vacia">Aún no hay intentos guardados.</p>
+      </div>
+
+      <div class="acciones">
+        <button type="button" id="btn-csv" class="btn btn-sec">Exportar CSV</button>
+        <button type="button" id="btn-json" class="btn btn-sec">Exportar JSON</button>
+        <button type="button" id="btn-borrar" class="btn btn-peligro">Borrar todo</button>
+      </div>
+    </section>
+
+    <!-- 06 · Transparencia -->
+    <section class="panel" id="paso-red">
+      <h2><span class="num">06</span> Qué sale a la red</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead><tr><th>Cuándo</th><th>Destino</th><th>Qué recibe</th></tr></thead>
+          <tbody>
+            <tr><td>Al abrir la página</td><td>Google Fonts</td><td>Tu IP (al descargar las fuentes)</td></tr>
+            <tr><td>Paso 02, solo si pulsas</td><td>ipapi.co / ipwho.is</td><td>Tu IP</td></tr>
+            <tr><td>Paso 03</td><td>Nadie</td><td>Las coordenadas se quedan en tu navegador</td></tr>
+            <tr><td>Enlace a OpenStreetMap, solo si lo abres</td><td>openstreetmap.org</td><td>Tus coordenadas e IP</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <div class="wrap">
+      <p>Uso académico, con participantes que aceptaron el ejercicio. No usar para identificar ni rastrear personas.</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
